@@ -1,52 +1,43 @@
 name: "Push/PR: Tests"
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-  pull_request:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-    types: [ready_for_review, opened, synchronize, reopened]
-  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
-  Build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        build_mode: ["Release", "Debug"]
-        dalamud-branch: ["release", "stg"]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
+  build:
+    runs-on: windows-latest
 
-      - name: Set up .NET
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '10.0.x'
 
-      - name: Install Dalamud
+      - name: Download Dalamud reference assemblies
+        shell: pwsh
         run: |
-          mkdir -p ~/.xlcore/dalamud/Hooks/${{ matrix.dalamud-branch }}
-          curl -L https://goatcorp.github.io/dalamud-distrib/latest.zip -o dalamud.zip
-          unzip -o dalamud.zip -d ~/.xlcore/dalamud/Hooks/${{ matrix.dalamud-branch }}
-
-      - name: Restore
-        run: dotnet restore
+          $dest = "$env:AppData\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Invoke-WebRequest `
+            -Uri 'https://goatcorp.github.io/dalamud-distrib/latest.zip' `
+            -OutFile dalamud.zip
+          Expand-Archive -Force -Path dalamud.zip -DestinationPath $dest
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build -c Release
 
-      - name: Package
-        run: dotnet publish --configuration Release
+      - name: Attach plugin archive to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" `
+            "https://github.com/NNekoPlugins/NNekoTriggers/releases/latest.zip" `
+            --clobber
