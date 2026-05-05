@@ -1,66 +1,78 @@
-name: "Push/PR: Tests"
+name: Release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-  pull_request:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-    types: [ready_for_review, opened, synchronize, reopened]
-  workflow_dispatch:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  Build:
+  Release:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        build_mode: ["Release", "Debug"]
-        dalamud-branch: ["release", "stg"]
+    defaults:
+      run:
+        working-directory: ${{ github.event.repository.name }}/
+        shell: bash
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
           submodules: true
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 10.0.x
 
-      - name: Install Dalamud
-        run: |
-          mkdir -p ~/.xlcore/dalamud/Hooks/${{ matrix.dalamud-branch }}
-          curl -L 'https://goatcorp.github.io/dalamud-distrib/latest.zip' -o dalamud.zip
-          unzip -o dalamud.zip -d ~/.xlcore/dalamud/Hooks/${{ matrix.dalamud-branch }}
+      - name: Setup Dalamud
+        uses: Blooym/setup-dalamud@v1.1.0
 
-      - name: Check for Lint Errors
-        id: lint
-        working-directory: NNekoTriggers
-        continue-on-error: true
-        run: | 
-          dotnet format --verify-no-changes > lint.txt 2>&1
-
-      - name: Report Lint Errors
-        working-directory: NNekoTriggers
-        if : steps.lint.outcome == 'failure'
-        run: |
-          cat lint.txt | sed -E 's/^(.*)$/::warning:: \1/g'
-
-      - name: Restore Project
-        working-directory: NNekoTriggers
+      - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Build Project
-        working-directory: NNekoTriggers
-        run: | 
-          dotnet build -c ${{ matrix.build_mode }}
-          echo "Checksum: $(sha512sum bin/x64/${{ matrix.build_mode }}/NNekoTriggers.dll)"
+      - name: Build plugin in release mode
+        run: dotnet build -c Release --no-restore --nologo -o ./bin/Release
+
+      - name: Generate Checksums
+        working-directory: ${{ github.event.repository.name }}/bin/Release/${{ github.event.repository.name }}
+
+        run: |
+          sha512sum latest.zip >> checksums.sha512
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ github.event.repository.name }}/bin/Release/${{ github.event.repository.name }}/latest.zip
+            ${{ github.event.repository.name }}/bin/Release/${{ github.event.repository.name }}/checksums.sha512
+          prerelease: false
+          append_body: true
+          body_path: .github/release-notices.md
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+      - name: Update repo.json
+        run: |
+          cd ../
+
+          export TAG_NAME=$(echo ${{ github.ref_name }} | sed 's/^v//')
+          export REPO_LOCATION=$(echo ${{ github.server_url }}/${{ github.repository }} | sed  's/\//\\\//g')
+
+          sed -i "s/\"AssemblyVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\"/\"AssemblyVersion\": \"${TAG_NAME}\"/g" repo.json
+          sed -i "s/\"TestingAssemblyVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\"/\"TestingAssemblyVersion\": \"${TAG_NAME}\"/g" repo.json
+          sed -i "s/\"DownloadLinkInstall\": \"[^\"]*\"/\"DownloadLinkInstall\": \"$REPO_LOCATION\/releases\/download\/${{ github.ref_name }}\/latest.zip\"/g" repo.json
+          sed -i "s/\"DownloadLinkTesting\": \"[^\"]*\"/\"DownloadLinkTesting\": \"$REPO_LOCATION\/releases\/download\/${{ github.ref_name }}\/latest.zip\"/g" repo.json
+          sed -i "s/\"DownloadLinkUpdate\": \"[^\"]*\"/\"DownloadLinkUpdate\": \"$REPO_LOCATION\/releases\/download\/${{ github.ref_name }}\/latest.zip\"/g" repo.json
+
+          git add repo.json
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update repo.json for ${{ github.ref_name }}"
+          
+          git push origin HEAD:main
