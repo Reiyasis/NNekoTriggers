@@ -8,6 +8,5 @@
   "Tags": [ "NNeko", "NaughtyNeko", "Triggers", "RP", "Conditional", "Commands", "Utility", "Other" ],
   "CategoryTags": [ "Utility", "Other" ],
   "IconUrl": "https://raw.githubusercontent.com/NNekoPlugins/NNekoTriggers/main/NNekoTriggers/Data/NNeko.png",
-  "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers",
-  "LoadPriority": "69"
+  "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers"
 }
