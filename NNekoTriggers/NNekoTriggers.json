@@ -3,7 +3,7 @@
   "Name": "NNeko's Conditional Triggers",
   "AssemblyVersion": "0.0.3.5",
   "ApplicableVersion": "any",
-  "DalamudApiLevel": 14,
+  "DalamudApiLevel": 15,
   "LoadPriority": 69,
   "Punchline": "Modular trigger system with DTR integration.",
   "Description": "Provides zone triggers, RNG triggers, job-swap triggers, login triggers, and more.",
