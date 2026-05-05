@@ -1,9 +1,18 @@
-name: "Push/PR: Tests"
-
 on:
-  release:
-    types: [published]
-
+  push:
+    branches: [main]
+    paths:
+      - "NNekoTriggers/**/*.cs"
+      - "NNekoTriggers/**/*.csproj"
+      - "NNekoTriggers/**/*.resx"
+  pull_request:
+    branches: [main]
+    paths:
+      - "NNekoTriggers/**/*.cs"
+      - "NNekoTriggers/**/*.csproj"
+      - "NNekoTriggers/**/*.resx"
+    types: [ready_for_review, opened, synchronize, reopened]
+  workflow_dispatch:
 permissions:
   contents: write
 
