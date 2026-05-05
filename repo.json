@@ -10,9 +10,9 @@
         "CategoryTags": [ "Utility", "Other" ],
         "IconUrl": "https://raw.githubusercontent.com/NNekoPlugins/NNekoTriggers/main/NNekoTriggers/Data/NNeko.png",
         "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers",
-        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.4/latest.zip",
-        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.4/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.4/latest.zip",
+        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.5/latest.zip",
+        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.5/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.5/latest.zip",
         "LoadPriority": "69"
     }
 ]
