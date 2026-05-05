@@ -1,20 +1,11 @@
 name: "Push/PR: Tests"
-
 on:
-  push:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-  pull_request:
-    branches: [main]
-    paths:
-      - "NNekoTriggers/**/*.cs"
-      - "NNekoTriggers/**/*.csproj"
-      - "NNekoTriggers/**/*.resx"
-    types: [ready_for_review, opened, synchronize, reopened]
+  release:
+    types: [published]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
