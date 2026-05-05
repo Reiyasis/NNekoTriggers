@@ -1,13 +1,11 @@
 {
   "Author": "NaughtyNeko",
   "Name": "NNeko's Conditional Triggers",
+  "AssemblyVersion": "0.0.3.4",
   "Punchline": "Modular trigger system with DTR integration.",
   "Description": "Provides zone triggers, RNG triggers, job-swap triggers, login triggers, and more.",
   "Tags": [ "NNeko", "NaughtyNeko", "Triggers", "RP", "Conditional", "Commands", "Utility", "Other" ],
   "CategoryTags": [ "Utility", "Other" ],
   "IconUrl": "https://raw.githubusercontent.com/NNekoPlugins/NNekoTriggers/main/NNekoTriggers/Data/NNeko.png",
-  "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers",
-  "LoadRequiredState": "0",
-  "CanUnloadAsync": "false",
-  "LoadSync": "true"
+  "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers"
 }
