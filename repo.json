@@ -3,7 +3,7 @@
         "Author": "NaughtyNeko",
         "Name": "NNeko's Conditional Triggers",
         "InternalName": "NNekoTriggers",
-        "AssemblyVersion": "0.0.3.4"
+        "AssemblyVersion": "0.0.3.4",
         "Punchline": "Modular trigger system with DTR integration.",
         "Description": "Provides zone triggers, RNG triggers, job-swap triggers, login triggers, and more.",
         "Tags": [ "NNeko", "NaughtyNeko", "Triggers", "RP", "Conditional", "Commands", "Utility", "Other" ],
