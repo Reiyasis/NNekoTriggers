@@ -4,6 +4,8 @@ using Dalamud.Game.Gui.Toast;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using ECommons;
 using ECommons.GameHelpers;
 using NNekoTriggers.Command;
@@ -18,6 +20,7 @@ namespace NNekoTriggers
     internal sealed class NNekoTriggers : IDalamudPlugin, IDisposable
     {
         #region
+        [PluginService] public static IGameInteropProvider GameInterop { get; private set; }
         [PluginService] public static IDalamudPluginInterface PluginInterface { get; private set; }
         [PluginService] public static ICommandManager Commands { get; private set; }
         [PluginService] public static IClientState ClientState { get; private set; }
@@ -39,12 +42,14 @@ namespace NNekoTriggers
         public static PluginConfiguration PluginConfiguration { get; private set; }
         //internal static IDtrBarEntry DtrEntry;
         public static IEnumerable<TerritoryType> AllowedTerritories;
+        private Hook<ActionManager.Delegates.UseAction>? _useActionHook;
         private const uint ROLEPLAY_ONLINE_STATUS_ID = 22;
         private static readonly uint[] AllowedTerritoryUse = [
               0, // Town
               1, // Open World
               2, // Inn
              13, // Housing Area
+             14, //House Indoor
              19, // Chocobo Square
              23, // Gold Saucer
              30, // Grand Company Garrison
@@ -54,6 +59,12 @@ namespace NNekoTriggers
              47, // Island Sanctuary
              48, // Bozja
              60, // Cosmic Exploration
+             61, //Occult
+             31, //Deepdungeon
+             57, //Criterion
+             58, //Criterion Savage
+             48, //Ocean Fishing
+             28, //Crystaline Conflict
         ];
         #endregion
 
@@ -74,6 +85,13 @@ namespace NNekoTriggers
             ClientState.TerritoryChanged += this.OnTerritoryChanged;
             ClientState.ClassJobChanged += this.ClientState_ClassJobChanged;
             ClientState.Login += ClientState_OnLogin;
+            unsafe
+            {
+                _useActionHook = GameInterop.HookFromAddress<ActionManager.Delegates.UseAction>(
+                    ActionManager.MemberFunctionPointers.UseAction,
+                    UseActionDetour);
+                _useActionHook.Enable();
+            }
         }
 
         /// <summary>
@@ -89,6 +107,8 @@ namespace NNekoTriggers
             CommandManager.Dispose();
             WindowManager.Dispose();
             ECommonsMain.Dispose();
+            _useActionHook?.Disable();
+            _useActionHook?.Dispose();
         }
 
         /// <summary>
@@ -235,6 +255,80 @@ namespace NNekoTriggers
                     HandleZoneTriggerENF(characterConfig, characterConfig.ZoneCommand);
                 }
             }
+        }
+        /// <summary>
+        ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行
+        /// </summary>
+        private unsafe bool UseActionDetour(
+            ActionManager* actionManager,
+            ActionType actionType,
+            uint actionId,
+            ulong targetId,
+            uint extraParam,
+            ActionManager.UseActionMode mode,
+            uint comboRouteId,
+            bool* outOptAreaTargeted)
+        {
+            var result = _useActionHook!.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+
+            if (actionType != ActionType.Item || !ClientState.IsLoggedIn)
+                return result;
+
+            var characterConfig = Utils.GetCharacterConfig();
+            if (characterConfig == null ||
+                !characterConfig.PluginEnabled ||
+                !characterConfig.EnableItemUse ||
+                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)))
+            {
+                return result;
+            }
+
+            // 既存のRNG判定をそのまま利用（RNG OFFなら必ず実行）
+            if (!ShouldDoENF())
+                return result;
+
+            // 3つのコマンドから有効なものをランダム選択
+            var commands = new List<string>();
+            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand1.Content))
+                commands.Add(characterConfig.ItemUseCommand1.Content);
+            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand2.Content))
+                commands.Add(characterConfig.ItemUseCommand2.Content);
+            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand3.Content))
+                commands.Add(characterConfig.ItemUseCommand3.Content);
+
+            if (commands.Count == 0)
+            {
+                PluginLog.Warning("ItemUse Triggered but no commands are set.");
+                return result;
+            }
+
+            // ランダムに1つ選択
+            var selectedCommand = commands[Random.Shared.Next(commands.Count)];
+            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing random command: {selectedCommand}");
+
+            // 実行（ゾーントリガーと同じ待機処理を再利用）
+            new Task(() =>
+            {
+                try
+                {
+                    while (!Utils.CanUseGlamourPlates())
+                    {
+                        PluginLog.Information("Unable to execute yet, waiting for conditions to clear.");
+                        Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    }
+
+                    if (!Player.Mounted)
+                    {
+                        Commands.ProcessCommand(selectedCommand);
+                    }
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "An error occured whilst attempting to execute item use command.");
+                }
+            }).Start();
+
+            return result;
         }
 
         /// <summary>

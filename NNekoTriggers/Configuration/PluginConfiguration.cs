@@ -15,6 +15,7 @@ namespace NNekoTriggers.Configuration
     {
         public int Version { get; set; }
         public bool PluginEnabled = true;
+        public bool EnableItemUse;
         public bool ShowInDtr = true;
         public bool RpOnlyInDtr;
         public bool OcmdInDtr;
@@ -28,12 +29,15 @@ namespace NNekoTriggers.Configuration
         public bool EnableZones;
         public bool EnableGset;
         public bool EnableOnLogin;
-        public int OddsMax = 100;
+        public int OddsMax = 100;　
         public int OddsMin = 25;
         public CustomCommand OnLoginCommand = new();
         public CustomCommand OverrideCommand = new();
         public CustomCommand GearsetCommand = new();
         public CustomCommand ZoneCommand = new();
+        public CustomCommand ItemUseCommand1 = new();
+        public CustomCommand ItemUseCommand2 = new();
+        public CustomCommand ItemUseCommand3 = new();
     }
 
     internal sealed class CustomCommand

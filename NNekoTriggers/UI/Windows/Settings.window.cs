@@ -221,6 +221,46 @@ namespace NNekoTriggers.UI.Windows
 #pragma warning restore CS8601 // Possible null reference assignment.
             ImGui.EndDisabled();
 
+            // ==================== Item Use (3コマンド・ランダム実行) ====================
+            if (ImGui.Checkbox("Enable Item Use feature", ref config.EnableItemUse))
+            {
+                NNekoTriggers.PluginConfiguration.Save();
+                PluginLog.Information($"NNekoTriggers Item-Use Module {(config.EnableItemUse ? "Enabled" : "Disabled")}");
+                // DTRは削除済みのためUpdateDtrEntryは不要
+            }
+
+            ImGui.BeginDisabled(!config.EnableItemUse);
+            ImGui.Separator();
+            ImGui.Text("Item Use Commands (ランダムで1つ実行されます)");
+
+            // Command 1
+            string cmd1 = config.ItemUseCommand1.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##ItemUseCmd1", "/echo アイテム使った！ など", ref cmd1, 256))
+            {
+                config.ItemUseCommand1.Content = cmd1;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+
+            // Command 2
+            string cmd2 = config.ItemUseCommand2.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##ItemUseCmd2", "/echo 2番目のコマンド", ref cmd2, 256))
+            {
+                config.ItemUseCommand2.Content = cmd2;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+
+            // Command 3
+            string cmd3 = config.ItemUseCommand3.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##ItemUseCmd3", "/echo 3番目のコマンド", ref cmd3, 256))
+            {
+                config.ItemUseCommand3.Content = cmd3;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+
+            ImGui.Text("※ 空欄のコマンドは無視されます");
+            ImGui.Separator();
+            ImGui.EndDisabled();
+            // ============================================================================
         }
     }
 }

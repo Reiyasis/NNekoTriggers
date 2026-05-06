@@ -18,6 +18,7 @@ namespace NNekoTriggers.Command
         private const string ZoneCmd = "/tzone";
         private const string OverrideCmd = "/toverride";
         private const string OnLoginCmd = "/tonlogin";
+        private const string ItemUseCmd = "/titemuse";
 
         /// <summary>
         ///     Initializes the CommandManager and its resources.
@@ -86,6 +87,14 @@ namespace NNekoTriggers.Command
                 ShowInHelp = true
             });
 
+            NNekoTriggers.Commands.AddHandler(ItemUseCmd, new CommandInfo(this.OnCommand)
+            {
+                HelpMessage = "toggles the Item-Use trigger." +
+        $"\n\t '{ItemUseCmd} on' enables the Item-Use trigger." +
+        $"\n\t '{ItemUseCmd} off' disables the Item-Use trigger.",
+                ShowInHelp = true
+            });
+
         }
 
         /// <summary>
@@ -99,6 +108,7 @@ namespace NNekoTriggers.Command
             NNekoTriggers.Commands.RemoveHandler(OverrideCmd);
             NNekoTriggers.Commands.RemoveHandler(GsetCmd);
             NNekoTriggers.Commands.RemoveHandler(ZoneCmd);
+            NNekoTriggers.Commands.RemoveHandler(ItemUseCmd);
         }
 
         /// <summary>
@@ -338,6 +348,17 @@ namespace NNekoTriggers.Command
                         NNekoTriggers.PluginConfiguration.Save();
                         PluginLog.Information($"NNekoTriggers Login Module {(config.EnableOnLogin ? "Enabled" : "Disabled")}");
                         NNekoTriggers.WindowManager.UpdateDtrEntry();
+                    }
+                    break;
+                case ItemUseCmd when args?.Length == 0:
+                case ItemUseCmd when args?.Length > 0 && args.Split(" ")[0] == "on":
+                case ItemUseCmd when args?.Length > 0 && args.Split(" ")[0] == "off":
+                    if (config != null)
+                    {
+                        config.EnableItemUse = args?.Length == 0 ? !config.EnableItemUse : args.Split(" ")[0] == "on";
+                        NNekoTriggers.PluginConfiguration.Save();
+                        PluginLog.Information($"NNekoTriggers Item-Use Module {(config.EnableItemUse ? "Enabled" : "Disabled")}");
+                        // UpdateDtrEntry() は削除（DTR機能自体を無効化）
                     }
                     break;
             }
