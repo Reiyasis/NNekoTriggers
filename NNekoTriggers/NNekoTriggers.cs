@@ -12,6 +12,7 @@ using NNekoTriggers.Command;
 using NNekoTriggers.Configuration;
 using NNekoTriggers.Helpers;
 using NNekoTriggers.UI;
+using Dalamud.Game.Gui.Toast;
 using Task = System.Threading.Tasks.Task;
 using TerritoryType = Lumina.Excel.Sheets.TerritoryType;
 
@@ -32,6 +33,7 @@ namespace NNekoTriggers
         [PluginService] public static IPluginLog PluginLog { get; private set; }
         [PluginService] public static IPlayerState PlayerState { get; private set; }
         [PluginService] internal static IToastGui Toast { get; private set; } = null!;
+        [PluginService] public static IToastGui ToastGui { get; private set; }
         public static ToastOptions ToastOptions = new()
         {
             Speed = ToastSpeed.Fast,
@@ -112,7 +114,7 @@ namespace NNekoTriggers
         }
 
         /// <summary>
-        ///     ジョブ変更を検知 + 3つのコマンドからランダムに1つ実行
+        ///     ジョブ/ギアセット変更を検知 + 3つのコマンドからランダムに1つ実行 + テキスト表示
         /// </summary>
         private void ClientState_ClassJobChanged(uint classJobId)
         {
@@ -137,14 +139,25 @@ namespace NNekoTriggers
 
                 try
                 {
-                    // 3つのコマンドから有効なものを集める
+                    // 3つのコマンドと表示テキストをペアで集める
                     var commands = new List<string>();
+                    var displayTexts = new List<string>();
+
                     if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand1.Content))
+                    {
                         commands.Add(characterConfig.GearsetCommand1.Content);
+                        displayTexts.Add(characterConfig.GearsetDisplayText1);
+                    }
                     if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand2.Content))
+                    {
                         commands.Add(characterConfig.GearsetCommand2.Content);
+                        displayTexts.Add(characterConfig.GearsetDisplayText2);
+                    }
                     if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand3.Content))
+                    {
                         commands.Add(characterConfig.GearsetCommand3.Content);
+                        displayTexts.Add(characterConfig.GearsetDisplayText3);
+                    }
 
                     if (commands.Count == 0)
                     {
@@ -153,24 +166,26 @@ namespace NNekoTriggers
                     }
 
                     // ランダムに1つ選択
-                    var selectedCommand = commands[Random.Shared.Next(commands.Count)];
+                    int index = Random.Shared.Next(commands.Count);
+                    var selectedCommand = commands[index];
+                    var selectedDisplayText = displayTexts[index];
 
-                    PluginLog.Information($"Job Swap Triggered → Executing random command: {selectedCommand}");
+                    PluginLog.Information($"Job Swap Triggered → Executing: {selectedCommand}");
 
-                    // Overrideが有効ならそちらを優先（既存の挙動を維持）
+                    // コマンド実行（OverrideがONなら優先）
                     var cmd = characterConfig.EnableOcmd
                         ? characterConfig.OverrideCommand.Content
                         : selectedCommand;
 
-                    if (string.IsNullOrWhiteSpace(cmd))
-                    {
-                        PluginLog.Error("Unable to execute, because the command appears to be empty.");
-                        return;
-                    }
-
-                    if (!Player.Mounted)
+                    if (!string.IsNullOrWhiteSpace(cmd) && !Player.Mounted)
                     {
                         Commands.ProcessCommand(cmd);
+                    }
+
+                    // 大きくテキスト表示（空欄ならスキップ）
+                    if (!string.IsNullOrWhiteSpace(selectedDisplayText))
+                    {
+                        NNekoTriggers.ToastGui.ShowQuest(selectedDisplayText);
                     }
                 }
                 catch (Exception e)
@@ -271,7 +286,7 @@ namespace NNekoTriggers
             }
         }
         /// <summary>
-        ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行
+        ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行 + テキスト表示
         /// </summary>
         private unsafe bool UseActionDetour(
             ActionManager* actionManager,
@@ -297,18 +312,28 @@ namespace NNekoTriggers
                 return result;
             }
 
-            // 既存のRNG判定をそのまま利用（RNG OFFなら必ず実行）
             if (!ShouldDoENF())
                 return result;
 
-            // 3つのコマンドから有効なものをランダム選択
+            // 3つのコマンドと表示テキストをペアで集める
             var commands = new List<string>();
+            var displayTexts = new List<string>();
+
             if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand1.Content))
+            {
                 commands.Add(characterConfig.ItemUseCommand1.Content);
+                displayTexts.Add(characterConfig.ItemUseDisplayText1);
+            }
             if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand2.Content))
+            {
                 commands.Add(characterConfig.ItemUseCommand2.Content);
+                displayTexts.Add(characterConfig.ItemUseDisplayText2);
+            }
             if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand3.Content))
+            {
                 commands.Add(characterConfig.ItemUseCommand3.Content);
+                displayTexts.Add(characterConfig.ItemUseDisplayText3);
+            }
 
             if (commands.Count == 0)
             {
@@ -317,17 +342,19 @@ namespace NNekoTriggers
             }
 
             // ランダムに1つ選択
-            var selectedCommand = commands[Random.Shared.Next(commands.Count)];
-            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing random command: {selectedCommand}");
+            int index = Random.Shared.Next(commands.Count);
+            var selectedCommand = commands[index];
+            var selectedDisplayText = displayTexts[index];
 
-            // 実行（ゾーントリガーと同じ待機処理を再利用）
+            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing: {selectedCommand}");
+
+            // コマンド実行
             new Task(() =>
             {
                 try
                 {
                     while (!Utils.CanUseGlamourPlates())
                     {
-                        PluginLog.Information("Unable to execute yet, waiting for conditions to clear.");
                         Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                     }
 
@@ -341,6 +368,12 @@ namespace NNekoTriggers
                     PluginLog.Error(e, "An error occured whilst attempting to execute item use command.");
                 }
             }).Start();
+
+            // 大きくテキスト表示（空欄ならスキップ）
+            if (!string.IsNullOrWhiteSpace(selectedDisplayText))
+            {
+                NNekoTriggers.ToastGui.ShowQuest(selectedDisplayText);
+            }
 
             return result;
         }
