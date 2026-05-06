@@ -33,7 +33,9 @@ namespace NNekoTriggers.Configuration
         public int OddsMin = 25;
         public CustomCommand OnLoginCommand = new();
         public CustomCommand OverrideCommand = new();
-        public CustomCommand GearsetCommand = new();
+        public CustomCommand GearsetCommand1 = new();
+        public CustomCommand GearsetCommand2 = new();
+        public CustomCommand GearsetCommand3 = new();
         public CustomCommand ZoneCommand = new();
         public CustomCommand ItemUseCommand1 = new();
         public CustomCommand ItemUseCommand2 = new();

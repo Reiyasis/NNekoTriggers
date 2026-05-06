@@ -112,58 +112,72 @@ namespace NNekoTriggers
         }
 
         /// <summary>
-        ///     Handles class/job changes and custom command execution.
+        ///     ジョブ変更を検知 + 3つのコマンドからランダムに1つ実行
         /// </summary>
-        /// <param name="classJobId"></param>
         private void ClientState_ClassJobChanged(uint classJobId)
         {
             if (!ClientState.IsLoggedIn)
+                return;
+
+            var characterConfig = Utils.GetCharacterConfig();
+            if (!characterConfig.PluginEnabled ||
+                !characterConfig.EnableGset ||
+                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) ||
+                !PlayerState.ClassJob.Value.ClassJobCategory.IsValid)
             {
                 return;
             }
-            var characterConfig = Utils.GetCharacterConfig();
-            if (characterConfig.PluginEnabled && (!characterConfig.EnableRpOnly || Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
-                characterConfig.EnableGset && PlayerState.ClassJob.Value.ClassJobCategory.IsValid)
+
+            PluginLog.Information("ClientState_ClassJobChanged: Job Swap Command Triggered");
+
+            new Task(() =>
             {
-                PluginLog.Information("ClientState_ClassJobChanged: Job Swap Command Triggered");
-                new Task(() =>
+                if (!ShouldDoENF())
+                    return;
+
+                try
                 {
-                    if (ShouldDoENF())
+                    // 3つのコマンドから有効なものを集める
+                    var commands = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand1.Content))
+                        commands.Add(characterConfig.GearsetCommand1.Content);
+                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand2.Content))
+                        commands.Add(characterConfig.GearsetCommand2.Content);
+                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand3.Content))
+                        commands.Add(characterConfig.GearsetCommand3.Content);
+
+                    if (commands.Count == 0)
                     {
-                        try
-                        {
-                            var cmd = "/echo NNekoTriggers: Job Swap Command is Unset.";
-                            if (characterConfig.EnableOcmd)
-                            {
-                                cmd = characterConfig.OverrideCommand.Content;
-                            }
-                            else if (!GenericHelpers.IsNullOrEmpty(characterConfig.GearsetCommand.Content))
-                            {
-                                cmd = characterConfig.GearsetCommand.Content;
-                            }
-                            else
-                            {
-                                PluginLog.Information("Unable to execute, because no Override or Job Swap commands were found.");
-                                return;
-                            }
-                            if (cmd == null)
-                            {
-                                PluginLog.Error("Unable to execute, because the command appears to be empty.");
-                                return;
-                            }
-                            else if (cmd != null)
-                            {
-                                PluginLog.Information("ClientState_ClassJobChanged: Trigger Successful. Processing Job Swap Command.");
-                                if (!Player.Mounted)
-                                {
-                                    Commands.ProcessCommand(cmd);
-                                }
-                            }
-                        }
-                        catch (Exception e) { PluginLog.Error(e, "ClientState_ClassJobChanged: An error occured processing ClientState_ClassJobChanged."); }
+                        PluginLog.Warning("Job Swap Triggered but no commands are set.");
+                        return;
                     }
-                }).Start();
-            }
+
+                    // ランダムに1つ選択
+                    var selectedCommand = commands[Random.Shared.Next(commands.Count)];
+
+                    PluginLog.Information($"Job Swap Triggered → Executing random command: {selectedCommand}");
+
+                    // Overrideが有効ならそちらを優先（既存の挙動を維持）
+                    var cmd = characterConfig.EnableOcmd
+                        ? characterConfig.OverrideCommand.Content
+                        : selectedCommand;
+
+                    if (string.IsNullOrWhiteSpace(cmd))
+                    {
+                        PluginLog.Error("Unable to execute, because the command appears to be empty.");
+                        return;
+                    }
+
+                    if (!Player.Mounted)
+                    {
+                        Commands.ProcessCommand(cmd);
+                    }
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "ClientState_ClassJobChanged: An error occured processing ClientState_ClassJobChanged.");
+                }
+            }).Start();
         }
 
         /// <summary>

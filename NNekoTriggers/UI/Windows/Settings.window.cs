@@ -138,20 +138,42 @@ namespace NNekoTriggers.UI.Windows
                 NNekoTriggers.PluginConfiguration.Save();
                 NNekoTriggers.WindowManager.UpdateDtrEntry();
             }
+
             ImGui.BeginDisabled(!config.EnableGset);
-            var gearsetCmd = config.GearsetCommand;
-            var gscmdslot = config.GearsetCommand.Content;
-#pragma warning disable CS8601 // Possible null reference assignment.
-            if (ImGui.InputTextWithHint("Gearset Command", "/command here...", ref gscmdslot, 100))
+            ImGui.Separator();
+            ImGui.Text("Gearset Swap Commands (ランダムで1つ実行されます)");
+
+            // Gearset Command 1
+            string gcmd1 = config.GearsetCommand1.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##GearsetCmd1", "/echo ギアセット変更！ など", ref gcmd1, 256))
             {
-                unsafe
-                {
-                    gearsetCmd.Content = gscmdslot;
-                    config.GearsetCommand = gearsetCmd;
-                    NNekoTriggers.PluginConfiguration.Save();
-                    NNekoTriggers.WindowManager.UpdateDtrEntry();
-                }
+                config.GearsetCommand1.Content = gcmd1;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
             }
+
+            // Gearset Command 2
+            string gcmd2 = config.GearsetCommand2.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##GearsetCmd2", "/echo 2番目のコマンド", ref gcmd2, 256))
+            {
+                config.GearsetCommand2.Content = gcmd2;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+
+            // Gearset Command 3
+            string gcmd3 = config.GearsetCommand3.Content ?? string.Empty;
+            if (ImGui.InputTextWithHint("##GearsetCmd3", "/echo 3番目のコマンド", ref gcmd3, 256))
+            {
+                config.GearsetCommand3.Content = gcmd3;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+
+            ImGui.Text("※ 空欄のコマンドは無視されます");
+            ImGui.Separator();
+            ImGui.EndDisabled();
+
 #pragma warning restore CS8601 // Possible null reference assignment.
 
             ImGui.EndDisabled();
