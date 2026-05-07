@@ -52,17 +52,19 @@ namespace NNekoTriggers.UI
             NNekoTriggers.ClientState.Logout += this.OnLogout;
             NNekoTriggers.PluginInterface.UiBuilder.OpenConfigUi += this.ToggleConfigWindow;
             NNekoTriggers.PluginInterface.UiBuilder.OpenMainUi += this.ToggleConfigWindow;
+
             this.Framework = framework;
-            this.DtrBar = dtrBar;
-
-            this.RpOnlyEntry.Shown = false;
-            this.RngEntry.Shown = false;
-            this.ZoneEntry.Shown = false;
-            this.GearsetEntry.Shown = false;
-            this.OverrideEntry.Shown = false;
-            this.OnLoginEntry.Shown = false;
-
             this.Framework.Update += this.OnFrameworkUpdate;
+            if (NNekoTriggers.PluginInterface.UiBuilder.UiPrepared)
+            {
+                this.DtrBar = dtrBar;
+                this.RpOnlyEntry.Shown = false;
+                this.RngEntry.Shown = false;
+                this.ZoneEntry.Shown = false;
+                this.GearsetEntry.Shown = false;
+                this.OverrideEntry.Shown = false;
+                this.OnLoginEntry.Shown = false;
+            }
         }
 
         /// <summary>
@@ -247,7 +249,10 @@ namespace NNekoTriggers.UI
             var config = Utils.GetCharacterConfig();
             NNekoTriggers.PluginInterface.UiBuilder.OpenConfigUi += this.ToggleConfigWindow;
             NNekoTriggers.PluginInterface.UiBuilder.OpenMainUi += this.ToggleConfigWindow;
-            this.UpdateDtrEntry();
+            if (this.dtrHooked)
+            {
+                this.UpdateDtrEntry();
+            }
         }
 
         /// <summary>
@@ -275,6 +280,14 @@ namespace NNekoTriggers.UI
             {
                 return;
             }
+
+            //this.DtrBar = dtrBar;
+            this.RpOnlyEntry.Shown = false;
+            this.RngEntry.Shown = false;
+            this.ZoneEntry.Shown = false;
+            this.GearsetEntry.Shown = false;
+            this.OverrideEntry.Shown = false;
+            this.OnLoginEntry.Shown = false;
 
             if (config.PluginEnabled && config.ShowInDtr)
             {
