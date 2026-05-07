@@ -114,7 +114,7 @@ namespace NNekoTriggers
         }
 
         /// <summary>
-        ///     ジョブ/ギアセット変更を検知 + 3つのコマンドからランダムに1つ実行 + テキスト表示
+        ///     ジョブ/ギアセット変更を検知 + 3つのコマンドからランダムに1つ実行 + 各コマンド専用の複数行テキストを表示
         /// </summary>
         private void ClientState_ClassJobChanged(uint classJobId)
         {
@@ -132,32 +132,28 @@ namespace NNekoTriggers
 
             PluginLog.Information("ClientState_ClassJobChanged: Job Swap Command Triggered");
 
-            new Task(() =>
+            new Task(async () =>
             {
                 if (!ShouldDoENF())
                     return;
 
                 try
                 {
-                    // 3つのコマンドと表示テキストをペアで集める
-                    var commands = new List<string>();
-                    var displayTexts = new List<string>();
+                    // コマンドを3つ集める
+                    var commands = new List<string>
+            {
+                characterConfig.GearsetCommand1.Content,
+                characterConfig.GearsetCommand2.Content,
+                characterConfig.GearsetCommand3.Content
+            };
 
-                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand1.Content))
-                    {
-                        commands.Add(characterConfig.GearsetCommand1.Content);
-                        displayTexts.Add(characterConfig.GearsetDisplayText1);
-                    }
-                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand2.Content))
-                    {
-                        commands.Add(characterConfig.GearsetCommand2.Content);
-                        displayTexts.Add(characterConfig.GearsetDisplayText2);
-                    }
-                    if (!string.IsNullOrWhiteSpace(characterConfig.GearsetCommand3.Content))
-                    {
-                        commands.Add(characterConfig.GearsetCommand3.Content);
-                        displayTexts.Add(characterConfig.GearsetDisplayText3);
-                    }
+                    // 対応する複数行テキストも3つ集める
+                    var displayTexts = new List<string>
+            {
+                characterConfig.GearsetDisplayText1,
+                characterConfig.GearsetDisplayText2,
+                characterConfig.GearsetDisplayText3
+            };
 
                     if (commands.Count == 0)
                     {
@@ -168,7 +164,6 @@ namespace NNekoTriggers
                     // ランダムに1つ選択
                     int index = Random.Shared.Next(commands.Count);
                     var selectedCommand = commands[index];
-                    var selectedDisplayText = displayTexts[index];
 
                     PluginLog.Information($"Job Swap Triggered → Executing: {selectedCommand}");
 
@@ -182,10 +177,17 @@ namespace NNekoTriggers
                         Commands.ProcessCommand(cmd);
                     }
 
-                    // 大きくテキスト表示（空欄ならスキップ）
-                    if (!string.IsNullOrWhiteSpace(selectedDisplayText))
+                    var selectedTextBlock = displayTexts[index];                    // 例: "テキスト1\nテキスト2\nテキスト3"
+                    var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var line in textLines)
                     {
-                        NNekoTriggers.ToastGui.ShowQuest(selectedDisplayText);
+                        var trimmed = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(trimmed))
+                        {
+                            NNekoTriggers.ToastGui.ShowQuest(trimmed);
+                            await Task.Delay(TimeSpan.FromSeconds(characterConfig.GearsetDisplayDelay));
+                        }
                     }
                 }
                 catch (Exception e)
@@ -286,7 +288,7 @@ namespace NNekoTriggers
             }
         }
         /// <summary>
-        ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行 + テキスト表示
+        ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行 + 各コマンド専用の複数行テキストを表示
         /// </summary>
         private unsafe bool UseActionDetour(
             ActionManager* actionManager,
@@ -315,25 +317,21 @@ namespace NNekoTriggers
             if (!ShouldDoENF())
                 return result;
 
-            // 3つのコマンドと表示テキストをペアで集める
-            var commands = new List<string>();
-            var displayTexts = new List<string>();
+            // コマンドを3つ集める
+            var commands = new List<string>
+    {
+        characterConfig.ItemUseCommand1.Content,
+        characterConfig.ItemUseCommand2.Content,
+        characterConfig.ItemUseCommand3.Content
+    };
 
-            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand1.Content))
-            {
-                commands.Add(characterConfig.ItemUseCommand1.Content);
-                displayTexts.Add(characterConfig.ItemUseDisplayText1);
-            }
-            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand2.Content))
-            {
-                commands.Add(characterConfig.ItemUseCommand2.Content);
-                displayTexts.Add(characterConfig.ItemUseDisplayText2);
-            }
-            if (!string.IsNullOrWhiteSpace(characterConfig.ItemUseCommand3.Content))
-            {
-                commands.Add(characterConfig.ItemUseCommand3.Content);
-                displayTexts.Add(characterConfig.ItemUseDisplayText3);
-            }
+            // 対応する複数行テキストも3つ集める
+            var displayTexts = new List<string>
+    {
+        characterConfig.ItemUseDisplayText1,
+        characterConfig.ItemUseDisplayText2,
+        characterConfig.ItemUseDisplayText3
+    };
 
             if (commands.Count == 0)
             {
@@ -344,7 +342,6 @@ namespace NNekoTriggers
             // ランダムに1つ選択
             int index = Random.Shared.Next(commands.Count);
             var selectedCommand = commands[index];
-            var selectedDisplayText = displayTexts[index];
 
             PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing: {selectedCommand}");
 
@@ -354,14 +351,10 @@ namespace NNekoTriggers
                 try
                 {
                     while (!Utils.CanUseGlamourPlates())
-                    {
                         Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-                    }
 
                     if (!Player.Mounted)
-                    {
                         Commands.ProcessCommand(selectedCommand);
-                    }
                 }
                 catch (Exception e)
                 {
@@ -369,15 +362,24 @@ namespace NNekoTriggers
                 }
             }).Start();
 
-            // 大きくテキスト表示（空欄ならスキップ）
-            if (!string.IsNullOrWhiteSpace(selectedDisplayText))
+            var selectedTextBlock = displayTexts[index];
+            var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            new Task(async () =>
             {
-                NNekoTriggers.ToastGui.ShowQuest(selectedDisplayText);
-            }
+                foreach (var line in textLines)
+                {
+                    var trimmed = line.Trim();
+                    if (!string.IsNullOrWhiteSpace(trimmed))
+                    {
+                        NNekoTriggers.ToastGui.ShowQuest(trimmed);
+                        Task.Delay(TimeSpan.FromSeconds(characterConfig.ItemUseDisplayDelay));
+                    }
+                }
+            }).Start();
 
             return result;
         }
-
         /// <summary>
         ///     Handles the login trigger and custom execution.
         /// </summary>

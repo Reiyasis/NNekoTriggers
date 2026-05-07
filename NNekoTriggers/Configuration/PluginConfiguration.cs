@@ -31,22 +31,24 @@ namespace NNekoTriggers.Configuration
         public bool EnableOnLogin;
         public int OddsMax = 100;
         public int OddsMin = 25;
-        public bool EnableSound = true;
+        public float GearsetDisplayDelay = 1.5f;
+        public float ItemUseDisplayDelay = 1.5f;
         public CustomCommand OnLoginCommand = new();
         public CustomCommand OverrideCommand = new();
         public CustomCommand GearsetCommand1 = new();
         public CustomCommand GearsetCommand2 = new();
         public CustomCommand GearsetCommand3 = new();
-        public string GearsetDisplayText1 = string.Empty;
-        public string GearsetDisplayText2 = string.Empty;
-        public string GearsetDisplayText3 = string.Empty;
         public CustomCommand ZoneCommand = new();
         public CustomCommand ItemUseCommand1 = new();
         public CustomCommand ItemUseCommand2 = new();
         public CustomCommand ItemUseCommand3 = new();
+        public string GearsetDisplayText1 = string.Empty;
+        public string GearsetDisplayText2 = string.Empty;
+        public string GearsetDisplayText3 = string.Empty;
         public string ItemUseDisplayText1 = string.Empty;
         public string ItemUseDisplayText2 = string.Empty;
         public string ItemUseDisplayText3 = string.Empty;
+
     }
 
     internal sealed class CustomCommand
