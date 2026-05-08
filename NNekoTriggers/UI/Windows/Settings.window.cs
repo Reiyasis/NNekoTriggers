@@ -204,27 +204,80 @@ namespace NNekoTriggers.UI.Windows
 
 #pragma warning restore CS8601 // Possible null reference assignment.
 
-            ImGui.EndDisabled();
             if (ImGui.Checkbox("Enable Zone feature", ref config.EnableZones))
             {
                 NNekoTriggers.PluginConfiguration.Save();
                 NNekoTriggers.WindowManager.UpdateDtrEntry();
             }
+
             ImGui.BeginDisabled(!config.EnableZones);
-            var territoryCmd = config.ZoneCommand;
-            var tcmdslot = config.ZoneCommand.Content;
-#pragma warning disable CS8601 // Possible null reference assignment.
-            if (ImGui.InputTextWithHint("Zone Command", "/command here...", ref tcmdslot, 100))
+            ImGui.Separator();
+            ImGui.Text("Zone Change Commands (ランダムで1つ実行されます)");
+
+            // Zone Command 1
+            string zcmd1 = config.ZoneCommand1.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneCmd1", ref zcmd1, 1024, new Vector2(0, 60)))
             {
-                unsafe
-                {
-                    territoryCmd.Content = tcmdslot;
-                    config.ZoneCommand = territoryCmd;
-                    NNekoTriggers.PluginConfiguration.Save();
-                    NNekoTriggers.WindowManager.UpdateDtrEntry();
-                }
+                config.ZoneCommand1.Content = zcmd1;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
             }
-#pragma warning restore CS8601 // Possible null reference assignment.
+            ImGui.Text("↑ Zone Command1（改行で複数コマンドOK）");
+
+            // Zone Command 2
+            string zcmd2 = config.ZoneCommand2.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneCmd2", ref zcmd2, 1024, new Vector2(0, 60)))
+            {
+                config.ZoneCommand2.Content = zcmd2;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+            ImGui.Text("↑ Zone Command2（改行で複数コマンドOK）");
+
+            // Zone Command 3
+            string zcmd3 = config.ZoneCommand3.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneCmd3", ref zcmd3, 1024, new Vector2(0, 60)))
+            {
+                config.ZoneCommand3.Content = zcmd3;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+            ImGui.Text("↑ Zone Command3（改行で複数コマンドOK）");
+
+            // テキスト表示（各コマンドごとの複数行）
+            string ztxt1 = config.ZoneDisplayText1 ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneTxt1", ref ztxt1, 1024, new Vector2(0, 60)))
+            {
+                config.ZoneDisplayText1 = ztxt1;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+            ImGui.Text("↑ Command1が選ばれたときに表示するテキスト（改行で複数OK）");
+
+            string ztxt2 = config.ZoneDisplayText2 ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneTxt2", ref ztxt2, 1024, new Vector2(0, 60)))
+            {
+                config.ZoneDisplayText2 = ztxt2;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+            ImGui.Text("↑ Command2が選ばれたときに表示するテキスト（改行で複数OK）");
+
+            string ztxt3 = config.ZoneDisplayText3 ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ZoneTxt3", ref ztxt3, 1024, new Vector2(0, 60)))
+            {
+                config.ZoneDisplayText3 = ztxt3;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+            ImGui.Text("↑ Command3が選ばれたときに表示するテキスト（改行で複数OK）");
+
+            ImGui.Text("テキスト表示ディレイ (秒)");
+            if (ImGui.InputFloat("##ZoneDelay", ref config.ZoneDisplayDelay, 0.1f, 1.0f))
+            {
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+
+            ImGui.Text("※ 空欄のコマンドは無視されます");
+            ImGui.Separator();
             ImGui.EndDisabled();
 
             if (ImGui.Checkbox("Enable Login feature", ref config.EnableOnLogin))

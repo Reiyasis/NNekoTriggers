@@ -201,32 +201,34 @@ namespace NNekoTriggers
         ///     Handles Map changes and custom command execution.
         /// </summary>
         /// <param name="obj"></param>
-        private void ClientState_MapIdChanged(uint obj)
+        private void ClientState_MapIdChanged(uint mapId)
         {
             if (!ClientState.IsLoggedIn)
+                return;
+
+            var characterConfig = Utils.GetCharacterConfig();
+            if (!characterConfig.PluginEnabled || !characterConfig.EnableZones ||
+                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)))
+                return;
+
+            PluginLog.Information("ClientState_MapIdChanged: Zone Change Triggered");
+
+            var commands = new List<string>
+    {
+        characterConfig.ZoneCommand1.Content,
+        characterConfig.ZoneCommand2.Content,
+        characterConfig.ZoneCommand3.Content
+    };
+
+            if (commands.All(string.IsNullOrWhiteSpace))
             {
+                PluginLog.Warning("Zone Triggered but no commands are set.");
                 return;
             }
-            else
-            {
-                var characterConfig = Utils.GetCharacterConfig();
-                if (characterConfig.PluginEnabled &&
-                characterConfig.EnableZones &&
-                (!characterConfig.EnableRpOnly || Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
-                (!GenericHelpers.IsNullOrEmpty(characterConfig.ZoneCommand.Content)))
-                {
-                    PluginLog.Information("OnTerritoryChanged: Territory Command Triggered");
 
-                    if (!AllowedTerritories.Any(t => t.RowId == Player.Territory.RowId))
-                    {
-                        PluginLog.Warning($"Territory {Player.Territory} is not an allowed territoryID, skipping custom executions.");
-                        return;
-                    }
-                    HandleZoneTriggerENF(characterConfig, characterConfig.ZoneCommand);
-                }
-            }
+            int index = Random.Shared.Next(commands.Count);
+            HandleZoneTriggerENF(characterConfig, index);
         }
-
         /// <summary>
         ///     Handles Zone changes and custom command execution.
         /// </summary>
@@ -234,27 +236,30 @@ namespace NNekoTriggers
         private void ClientState_ZoneInit(Dalamud.Game.ClientState.ZoneInitEventArgs obj)
         {
             if (!ClientState.IsLoggedIn)
+                return;
+
+            var characterConfig = Utils.GetCharacterConfig();
+            if (!characterConfig.PluginEnabled || !characterConfig.EnableZones ||
+                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)))
+                return;
+
+            PluginLog.Information("ClientState_ZoneInit: Zone Change Triggered");
+
+            var commands = new List<string>
+    {
+        characterConfig.ZoneCommand1.Content,
+        characterConfig.ZoneCommand2.Content,
+        characterConfig.ZoneCommand3.Content
+    };
+
+            if (commands.All(string.IsNullOrWhiteSpace))
             {
+                PluginLog.Warning("Zone Triggered but no commands are set.");
                 return;
             }
-            else
-            {
-                var characterConfig = Utils.GetCharacterConfig();
-                if (characterConfig.PluginEnabled &&
-                characterConfig.EnableZones &&
-                (!characterConfig.EnableRpOnly || Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
-                (!GenericHelpers.IsNullOrEmpty(characterConfig.ZoneCommand.Content)))
-                {
-                    PluginLog.Information("OnTerritoryChanged: Territory Command Triggered");
 
-                    if (!AllowedTerritories.Any(t => t.RowId == Player.Territory.RowId))
-                    {
-                        PluginLog.Warning($"Territory {Player.Territory} is not an allowed territoryID, skipping custom executions.");
-                        return;
-                    }
-                    HandleZoneTriggerENF(characterConfig, characterConfig.ZoneCommand);
-                }
-            }
+            int index = Random.Shared.Next(commands.Count);
+            HandleZoneTriggerENF(characterConfig, index);
         }
 
         /// <summary>
@@ -263,29 +268,37 @@ namespace NNekoTriggers
         /// <param name="territory"></param>
         private void OnTerritoryChanged(uint territory)
         {
-
             if (!ClientState.IsLoggedIn)
+                return;
+
+            var characterConfig = Utils.GetCharacterConfig();
+            if (!characterConfig.PluginEnabled || !characterConfig.EnableZones ||
+                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)))
+                return;
+
+            if (!AllowedTerritories.Any(t => t.RowId == territory))
             {
+                PluginLog.Warning($"Territory {territory} is not an allowed territoryID, skipping.");
                 return;
             }
-            else
-            {
-                var characterConfig = Utils.GetCharacterConfig();
-                if (characterConfig.PluginEnabled &&
-                characterConfig.EnableZones &&
-                (!characterConfig.EnableRpOnly || Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
-                (!GenericHelpers.IsNullOrEmpty(characterConfig.ZoneCommand.Content)))
-                {
-                    PluginLog.Information("OnTerritoryChanged: Territory Command Triggered");
 
-                    if (!AllowedTerritories.Any(t => t.RowId == territory))
-                    {
-                        PluginLog.Warning($"Territory {territory} is not an allowed territoryID, skipping custom executions.");
-                        return;
-                    }
-                    HandleZoneTriggerENF(characterConfig, characterConfig.ZoneCommand);
-                }
+            PluginLog.Information("OnTerritoryChanged: Zone Change Triggered");
+
+            var commands = new List<string>
+    {
+        characterConfig.ZoneCommand1.Content,
+        characterConfig.ZoneCommand2.Content,
+        characterConfig.ZoneCommand3.Content
+    };
+
+            if (commands.All(string.IsNullOrWhiteSpace))
+            {
+                PluginLog.Warning("Zone Triggered but no commands are set.");
+                return;
             }
+
+            int index = Random.Shared.Next(commands.Count);
+            HandleZoneTriggerENF(characterConfig, index);
         }
         /// <summary>
         ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行 + 各コマンド専用の複数行テキストを表示
@@ -409,58 +422,75 @@ namespace NNekoTriggers
             }
         }
 
+        private static void HandleZoneTriggerENF(CharacterConfiguration characterConfig, CustomCommand onLoginCommand) => throw new NotImplementedException();
+
         /// <summary>
         ///     Processes the command used for any changes in zone, map, or territory.
         /// </summary>
         /// <param name="characterConfig"></param>
-        private static void HandleZoneTriggerENF(CharacterConfiguration characterConfig, CustomCommand command) => new Task(() =>
+        /// <summary>
+        ///     Zone Changeトリガーの共通処理（改行複数コマンド + 各コマンドごとの複数行テキスト対応）
+        /// </summary>
+        private static void HandleZoneTriggerENF(CharacterConfiguration characterConfig, int selectedIndex)
         {
-            if (ShouldDoENF())
+            new Task(async () =>
             {
+                if (!ShouldDoENF())
+                    return;
+
                 try
                 {
-                    /*while (Condition[ConditionFlag.BetweenAreas]
-                        || Condition[ConditionFlag.BetweenAreas51]
-                        || Condition[ConditionFlag.Occupied]
-                        || Condition[ConditionFlag.OccupiedInCutSceneEvent]
-                        || Condition[ConditionFlag.Unconscious])*/
-                    while (!Utils.CanUseGlamourPlates())
+                    // コマンドブロック（ランダムで選ばれたもの）
+                    var zoneCommands = new List<string>
+            {
+                characterConfig.ZoneCommand1.Content,
+                characterConfig.ZoneCommand2.Content,
+                characterConfig.ZoneCommand3.Content
+            };
+                    var selectedCommandBlock = zoneCommands[selectedIndex];
+
+                    // コマンドを改行で分割して順番に実行
+                    var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in commandLines)
                     {
-                        PluginLog.Information("Unable to execute yet, waiting for conditions to clear.");
-                        var delay = TimeSpan.FromSeconds(1);
-                        Task.Delay(delay).Wait();
-                    }
-                    var cmd = "/echo NNekoTriggers: Territory/Login Command is Unset.";
-                    if (characterConfig.EnableOcmd)
-                    {
-                        cmd = characterConfig.OverrideCommand.Content;
-                    }
-                    else if (!GenericHelpers.IsNullOrEmpty(command.Content))
-                    {
-                        cmd = characterConfig.ZoneCommand.Content;
-                    }
-                    else
-                    {
-                        PluginLog.Information("Unable to execute, because no Override, Login, or Territory commands were found.");
-                        return;
-                    }
-                    if (cmd == null)
-                    {
-                        PluginLog.Error("Unable to execute, because the command appears to be empty.");
-                        return;
-                    }
-                    else if (cmd != null)
-                    {
-                        PluginLog.Information("Trigger Successful. Processing Territory Command.");
-                        if (!Player.Mounted)
+                        var cmd = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(cmd))
                         {
-                            Commands.ProcessCommand(cmd);
+                            var finalCmd = characterConfig.EnableOcmd ? characterConfig.OverrideCommand.Content : cmd;
+                            if (!string.IsNullOrWhiteSpace(finalCmd) && !Player.Mounted)
+                            {
+                                Commands.ProcessCommand(finalCmd);
+                            }
+                            await Task.Delay(300);
+                        }
+                    }
+
+                    // テキストを順番に表示
+                    var zoneTexts = new List<string>
+            {
+                characterConfig.ZoneDisplayText1,
+                characterConfig.ZoneDisplayText2,
+                characterConfig.ZoneDisplayText3
+            };
+                    var selectedTextBlock = zoneTexts[selectedIndex];
+                    var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var line in textLines)
+                    {
+                        var trimmed = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(trimmed))
+                        {
+                            NNekoTriggers.ToastGui.ShowQuest(trimmed);
+                            await Task.Delay(TimeSpan.FromSeconds(characterConfig.ZoneDisplayDelay));
                         }
                     }
                 }
-                catch (Exception e) { PluginLog.Error(e, "An error occured whilst attempting to execute custom commands."); }
-            }
-        }).Start();
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "HandleZoneTriggerENF: An error occured.");
+                }
+            }).Start();
+        }
 
         /// <summary>
         ///     Checks the current player status and the plugin configuration to determine whether to queue an attempted execution of custom commands.
