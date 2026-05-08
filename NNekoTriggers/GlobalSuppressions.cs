@@ -43,3 +43,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:NNekoTriggers.Configuration.PluginConfiguration.Save")]
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:NNekoTriggers.Helpers.Utils.IsCastingTeleportAction(System.UInt32)~System.Boolean")]
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:NNekoTriggers.NNekoTriggers.OnTerritoryChanged(System.UInt32)")]
+[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:NNekoTriggers.UI.WindowManager.#ctor(Dalamud.Plugin.Services.IFramework)")]
