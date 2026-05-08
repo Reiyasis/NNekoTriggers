@@ -139,7 +139,6 @@ namespace NNekoTriggers
 
                 try
                 {
-                    // コマンドを3つ集める
                     var commands = new List<string>
             {
                 characterConfig.GearsetCommand1.Content,
@@ -147,7 +146,6 @@ namespace NNekoTriggers
                 characterConfig.GearsetCommand3.Content
             };
 
-                    // 対応する複数行テキストも3つ集める
                     var displayTexts = new List<string>
             {
                 characterConfig.GearsetDisplayText1,
@@ -156,30 +154,31 @@ namespace NNekoTriggers
             };
 
                     if (commands.Count == 0)
-                    {
-                        PluginLog.Warning("Job Swap Triggered but no commands are set.");
                         return;
-                    }
 
-                    // ランダムに1つ選択
                     int index = Random.Shared.Next(commands.Count);
-                    var selectedCommand = commands[index];
+                    var selectedCommandBlock = commands[index];
 
-                    PluginLog.Information($"Job Swap Triggered → Executing: {selectedCommand}");
+                    PluginLog.Information($"Job Swap Triggered → Executing command block: {selectedCommandBlock}");
 
-                    // コマンド実行（OverrideがONなら優先）
-                    var cmd = characterConfig.EnableOcmd
-                        ? characterConfig.OverrideCommand.Content
-                        : selectedCommand;
-
-                    if (!string.IsNullOrWhiteSpace(cmd) && !Player.Mounted)
+                    // ★★★ コマンドを改行で分割して順番に実行 ★★★
+                    var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in commandLines)
                     {
-                        Commands.ProcessCommand(cmd);
+                        var cmd = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(cmd))
+                        {
+                            var finalCmd = characterConfig.EnableOcmd ? characterConfig.OverrideCommand.Content : cmd;
+                            if (!string.IsNullOrWhiteSpace(finalCmd) && !Player.Mounted)
+                                Commands.ProcessCommand(finalCmd);
+
+                            await Task.Delay(300); // コマンド同士の間に少し間隔を入れる
+                        }
                     }
 
-                    var selectedTextBlock = displayTexts[index];                    // 例: "テキスト1\nテキスト2\nテキスト3"
+                    // テキスト表示（今まで通り）
+                    var selectedTextBlock = displayTexts[index];
                     var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
                     foreach (var line in textLines)
                     {
                         var trimmed = line.Trim();
@@ -192,7 +191,7 @@ namespace NNekoTriggers
                 }
                 catch (Exception e)
                 {
-                    PluginLog.Error(e, "ClientState_ClassJobChanged: An error occured processing ClientState_ClassJobChanged.");
+                    PluginLog.Error(e, "ClientState_ClassJobChanged: An error occured.");
                 }
             }).Start();
         }
@@ -303,6 +302,9 @@ namespace NNekoTriggers
         /// <summary>
         ///     アイテム使用を即座に検知 + 3つのコマンドからランダムに1つ実行 + 各コマンド専用の複数行テキストを表示
         /// </summary>
+        /// <summary>
+        ///     アイテム使用を即座に検知 + 改行で複数のコマンド実行 + 各コマンド専用の複数行テキストを表示
+        /// </summary>
         private unsafe bool UseActionDetour(
             ActionManager* actionManager,
             ActionType actionType,
@@ -330,7 +332,6 @@ namespace NNekoTriggers
             if (!ShouldDoENF())
                 return result;
 
-            // コマンドを3つ集める
             var commands = new List<string>
     {
         characterConfig.ItemUseCommand1.Content,
@@ -338,7 +339,6 @@ namespace NNekoTriggers
         characterConfig.ItemUseCommand3.Content
     };
 
-            // 対応する複数行テキストも3つ集める
             var displayTexts = new List<string>
     {
         characterConfig.ItemUseDisplayText1,
@@ -352,13 +352,12 @@ namespace NNekoTriggers
                 return result;
             }
 
-            // ランダムに1つ選択
             int index = Random.Shared.Next(commands.Count);
-            var selectedCommand = commands[index];
+            var selectedCommandBlock = commands[index];
 
-            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing: {selectedCommand}");
+            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing command block: {selectedCommandBlock}");
 
-            // コマンド実行
+            // コマンド実行（改行で複数対応）
             new Task(() =>
             {
                 try
@@ -366,8 +365,16 @@ namespace NNekoTriggers
                     while (!Utils.CanUseGlamourPlates())
                         Task.Delay(TimeSpan.FromSeconds(1)).Wait();
 
-                    if (!Player.Mounted)
-                        Commands.ProcessCommand(selectedCommand);
+                    var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in commandLines)
+                    {
+                        var cmd = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(cmd) && !Player.Mounted)
+                        {
+                            Commands.ProcessCommand(cmd);
+                            Task.Delay(300).Wait();
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -375,10 +382,11 @@ namespace NNekoTriggers
                 }
             }).Start();
 
+            // テキスト表示（改行で複数対応）
             var selectedTextBlock = displayTexts[index];
             var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
-            new Task(async () =>
+            new Task(() =>
             {
                 foreach (var line in textLines)
                 {
@@ -386,7 +394,7 @@ namespace NNekoTriggers
                     if (!string.IsNullOrWhiteSpace(trimmed))
                     {
                         NNekoTriggers.ToastGui.ShowQuest(trimmed);
-                        Task.Delay(TimeSpan.FromSeconds(characterConfig.ItemUseDisplayDelay));
+                        Task.Delay(TimeSpan.FromSeconds(characterConfig.ItemUseDisplayDelay)).Wait();
                     }
                 }
             }).Start();

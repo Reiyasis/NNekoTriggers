@@ -143,14 +143,37 @@ namespace NNekoTriggers.UI.Windows
             ImGui.Separator();
             ImGui.Text("Gearset Swap Commands (ランダムで1つ実行されます)");
 
-            // Command 1 + 専用テキスト（複数行）
+            // Command 1 (複数コマンド対応)
             string gcmd1 = config.GearsetCommand1.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##GearsetCmd1", "/echo ギアセット変更！ など", ref gcmd1, 256))
+            if (ImGui.InputTextMultiline("##GearsetCmd1", ref gcmd1, 1024, new Vector2(0, 60)))
             {
                 config.GearsetCommand1.Content = gcmd1;
                 NNekoTriggers.PluginConfiguration.Save();
                 NNekoTriggers.WindowManager.UpdateDtrEntry();
             }
+            ImGui.Text("↑ Command1が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // Command 2
+            string gcmd2 = config.GearsetCommand2.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##GearsetCmd2", ref gcmd2, 1024, new Vector2(0, 60)))
+            {
+                config.GearsetCommand2.Content = gcmd2;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+            ImGui.Text("↑ Command2が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // Command 3
+            string gcmd3 = config.GearsetCommand3.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##GearsetCmd3", ref gcmd3, 1024, new Vector2(0, 60)))
+            {
+                config.GearsetCommand3.Content = gcmd3;
+                NNekoTriggers.PluginConfiguration.Save();
+                NNekoTriggers.WindowManager.UpdateDtrEntry();
+            }
+            ImGui.Text("↑ Command3が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // テキスト表示部分（今まで通り）
             string gtxt1 = config.GearsetDisplayText1 ?? string.Empty;
             if (ImGui.InputTextMultiline("##GearsetTxt1", ref gtxt1, 1024, new Vector2(0, 60)))
             {
@@ -159,14 +182,6 @@ namespace NNekoTriggers.UI.Windows
             }
             ImGui.Text("↑ Command1が選ばれたときに表示するテキスト（改行で複数OK）");
 
-            // Command 2
-            string gcmd2 = config.GearsetCommand2.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##GearsetCmd2", "/echo 2番目のコマンド", ref gcmd2, 256))
-            {
-                config.GearsetCommand2.Content = gcmd2;
-                NNekoTriggers.PluginConfiguration.Save();
-                NNekoTriggers.WindowManager.UpdateDtrEntry();
-            }
             string gtxt2 = config.GearsetDisplayText2 ?? string.Empty;
             if (ImGui.InputTextMultiline("##GearsetTxt2", ref gtxt2, 1024, new Vector2(0, 60)))
             {
@@ -175,14 +190,6 @@ namespace NNekoTriggers.UI.Windows
             }
             ImGui.Text("↑ Command2が選ばれたときに表示するテキスト（改行で複数OK）");
 
-            // Command 3
-            string gcmd3 = config.GearsetCommand3.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##GearsetCmd3", "/echo 3番目のコマンド", ref gcmd3, 256))
-            {
-                config.GearsetCommand3.Content = gcmd3;
-                NNekoTriggers.PluginConfiguration.Save();
-                NNekoTriggers.WindowManager.UpdateDtrEntry();
-            }
             string gtxt3 = config.GearsetDisplayText3 ?? string.Empty;
             if (ImGui.InputTextMultiline("##GearsetTxt3", ref gtxt3, 1024, new Vector2(0, 60)))
             {
@@ -335,13 +342,34 @@ namespace NNekoTriggers.UI.Windows
             ImGui.Separator();
             ImGui.Text("Item Use Commands (ランダムで1つ実行されます)");
 
-            // Command 1
+            // Command 1 (複数コマンド対応)
             string cmd1 = config.ItemUseCommand1.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##ItemUseCmd1", "/echo アイテム使った！ など", ref cmd1, 256))
+            if (ImGui.InputTextMultiline("##ItemUseCmd1", ref cmd1, 1024, new Vector2(0, 60)))
             {
                 config.ItemUseCommand1.Content = cmd1;
                 NNekoTriggers.PluginConfiguration.Save();
             }
+            ImGui.Text("↑ Command1が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // Command 2
+            string cmd2 = config.ItemUseCommand2.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ItemUseCmd2", ref cmd2, 1024, new Vector2(0, 60)))
+            {
+                config.ItemUseCommand2.Content = cmd2;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+            ImGui.Text("↑ Command2が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // Command 3
+            string cmd3 = config.ItemUseCommand3.Content ?? string.Empty;
+            if (ImGui.InputTextMultiline("##ItemUseCmd3", ref cmd3, 1024, new Vector2(0, 60)))
+            {
+                config.ItemUseCommand3.Content = cmd3;
+                NNekoTriggers.PluginConfiguration.Save();
+            }
+            ImGui.Text("↑ Command3が選ばれたときに実行するコマンド（改行で複数OK）");
+
+            // テキスト表示部分
             string txt1 = config.ItemUseDisplayText1 ?? string.Empty;
             if (ImGui.InputTextMultiline("##ItemUseTxt1", ref txt1, 1024, new Vector2(0, 60)))
             {
@@ -350,13 +378,6 @@ namespace NNekoTriggers.UI.Windows
             }
             ImGui.Text("↑ Command1が選ばれたときに表示するテキスト（改行で複数OK）");
 
-            // Command 2
-            string cmd2 = config.ItemUseCommand2.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##ItemUseCmd2", "/echo 2番目のコマンド", ref cmd2, 256))
-            {
-                config.ItemUseCommand2.Content = cmd2;
-                NNekoTriggers.PluginConfiguration.Save();
-            }
             string txt2 = config.ItemUseDisplayText2 ?? string.Empty;
             if (ImGui.InputTextMultiline("##ItemUseTxt2", ref txt2, 1024, new Vector2(0, 60)))
             {
@@ -365,13 +386,6 @@ namespace NNekoTriggers.UI.Windows
             }
             ImGui.Text("↑ Command2が選ばれたときに表示するテキスト（改行で複数OK）");
 
-            // Command 3
-            string cmd3 = config.ItemUseCommand3.Content ?? string.Empty;
-            if (ImGui.InputTextWithHint("##ItemUseCmd3", "/echo 3番目のコマンド", ref cmd3, 256))
-            {
-                config.ItemUseCommand3.Content = cmd3;
-                NNekoTriggers.PluginConfiguration.Save();
-            }
             string txt3 = config.ItemUseDisplayText3 ?? string.Empty;
             if (ImGui.InputTextMultiline("##ItemUseTxt3", ref txt3, 1024, new Vector2(0, 60)))
             {
@@ -389,7 +403,7 @@ namespace NNekoTriggers.UI.Windows
             ImGui.Text("※ 空欄のコマンドは無視されます");
             ImGui.Separator();
             ImGui.EndDisabled();
-            // ============================================================================
+            // ===============================================================================
         }
     }
 }
