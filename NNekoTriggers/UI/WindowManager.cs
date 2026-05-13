@@ -107,7 +107,7 @@ namespace NNekoTriggers.UI
             }
 
             // Ensure the DTR bar is ready
-            if (this.DtrBar.Entries.Count == 0)
+            if (NNekoTriggers.PluginInterface.UiBuilder.UiPrepared && this.DtrBar.Entries.Count == 0)
             {
                 return;
             }
