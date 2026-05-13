@@ -40,6 +40,9 @@ namespace NNekoTriggers
             Position = ToastPosition.Top
         };
         public static CommandManager CommandManager { get; private set; }
+        // Item Useトリガーの連打防止用クールダウン（戦闘中の連打対策）
+        private static DateTime _lastItemUseTriggered = DateTime.MinValue;
+        private static readonly TimeSpan _itemUseCooldown = TimeSpan.FromMilliseconds(1000);  // ← ここを調整可能
         public static WindowManager WindowManager { get; private set; }
         public static PluginConfiguration PluginConfiguration { get; private set; }
         //internal static IDtrBarEntry DtrEntry;
@@ -306,14 +309,14 @@ namespace NNekoTriggers
         ///     アイテム使用を即座に検知 + 改行で複数のコマンド実行 + 各コマンド専用の複数行テキストを表示
         /// </summary>
         private unsafe bool UseActionDetour(
-            ActionManager* actionManager,
-            ActionType actionType,
-            uint actionId,
-            ulong targetId,
-            uint extraParam,
-            ActionManager.UseActionMode mode,
-            uint comboRouteId,
-            bool* outOptAreaTargeted)
+    ActionManager* actionManager,
+    ActionType actionType,
+    uint actionId,
+    ulong targetId,
+    uint extraParam,
+    ActionManager.UseActionMode mode,
+    uint comboRouteId,
+    bool* outOptAreaTargeted)
         {
             var result = _useActionHook!.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
 
@@ -332,6 +335,13 @@ namespace NNekoTriggers
             if (!ShouldDoENF())
                 return result;
 
+            // 【追加】Item Useトリガーのクールダウン（連打防止）
+            if (DateTime.UtcNow - _lastItemUseTriggered < _itemUseCooldown)
+                return result;
+
+            _lastItemUseTriggered = DateTime.UtcNow;
+
+            // ── ここから下は今までのコード（3コマンド対応・改行対応など）は変更なし ──
             var commands = new List<string>
     {
         characterConfig.ItemUseCommand1.Content,
@@ -357,7 +367,7 @@ namespace NNekoTriggers
 
             PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing command block: {selectedCommandBlock}");
 
-            // コマンド実行（改行で複数対応）
+            // コマンド実行（改行対応）
             new Task(() =>
             {
                 try
@@ -382,7 +392,7 @@ namespace NNekoTriggers
                 }
             }).Start();
 
-            // テキスト表示（改行で複数対応）
+            // テキスト表示（改行対応）
             var selectedTextBlock = displayTexts[index];
             var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
