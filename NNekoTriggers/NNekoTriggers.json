@@ -3,6 +3,7 @@
   "Name": "NNeko's Conditional Triggers",
   "InternalName": "NNekoTriggers",
   "AssemblyVersion": "0.0.4.2",
+  "Version": "0.0.4.2",
   "ApplicableVersion": "any",
   "DalamudApiLevel": 15,
   "LoadPriority": 69,
