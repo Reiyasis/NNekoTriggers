@@ -3,7 +3,7 @@
         "Author": "NaughtyNeko",
         "Name": "NNeko's Conditional Triggers",
         "InternalName": "NNekoTriggers",
-        "AssemblyVersion": "0.0.4.0",
+        "AssemblyVersion": "0.0.4.1",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 15,
         "LoadPriority": 0,
@@ -16,8 +16,8 @@
         "CategoryTags": [ "Utility", "Other" ],
         "IconUrl": "https://raw.githubusercontent.com/NNekoPlugins/NNekoTriggers/main/NNekoTriggers/Data/NNeko.png",
         "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers",
-        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.0/latest.zip",
-        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.0/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.0/latest.zip"
+        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.1/latest.zip",
+        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.1/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.1/latest.zip"
     }
 ]
