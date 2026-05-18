@@ -72,7 +72,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <EmbeddedResource Include="Data\NNeko.png" />
-    <PackageReference Include="ECommons" Version="3.2.0.9" />
+    <PackageReference Include="ECommons" Version="3.2.0.19" />
     <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.2" />
   </ItemGroup>
 </Project>

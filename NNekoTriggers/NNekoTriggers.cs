@@ -65,13 +65,11 @@ namespace NNekoTriggers
             ECommonsMain.Init(PluginInterface, this, Module.DalamudReflector);
             PluginConfiguration = PluginConfiguration.Load();
             AllowedTerritories = DataManager.Excel.GetSheet<TerritoryType>().Where(x => AllowedTerritoryUse.Contains(x.TerritoryIntendedUse.RowId) && !x.IsPvpZone);
-            if (PluginInterface.UiBuilder.UiPrepared)
+
+            WindowManager = new(Framework, DtrBar);
+            if (WindowManager.dtrHooked)
             {
-                WindowManager = new(Framework, DtrBar);
-                if (WindowManager.dtrHooked)
-                {
-                    WindowManager.UpdateDtrEntry();
-                }
+                WindowManager.UpdateDtrEntry();
             }
             CommandManager = new();
             var config = Utils.GetCharacterConfig();
