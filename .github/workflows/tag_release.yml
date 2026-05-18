@@ -34,7 +34,8 @@ jobs:
         uses: Blooym/setup-dalamud@v1.1.0
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore NNekoTriggers/NNekoTriggers.csproj
+
 
       - name: Build plugin in release mode
         run: dotnet build NNekoTriggers/NNekoTriggers.csproj -c Release --no-restore --nologo -o NNekoTriggers/bin/Release
