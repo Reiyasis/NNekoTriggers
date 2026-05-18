@@ -53,7 +53,6 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);IDE1006,CS8618,MSB3270</NoWarn>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <DalamudUseLocalPluginJson>true</DalamudUseLocalPluginJson>
     <Version>0.0.4.3</Version>
     <AssemblyVersion>0.0.4.3</AssemblyVersion>
