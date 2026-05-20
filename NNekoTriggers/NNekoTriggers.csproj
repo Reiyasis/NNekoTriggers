@@ -53,16 +53,16 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);IDE1006,CS8618,MSB3270</NoWarn>
+    <DalamudUseLocalPluginJson>true</DalamudUseLocalPluginJson>
+    <Version>0.0.4.5</Version>
+    <AssemblyVersion>0.0.4.5</AssemblyVersion>
+    <FileVersion>0.0.4.5</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Data\NNeko.png" />
-    <Content Include="NNekoTriggers.json" />
-    <None Update="NNekoTriggers.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <EmbeddedResource Include="Data\NNeko.png" />
-    <PackageReference Include="ECommons" Version="3.2.0.9" />
+    <None Include="NNekoTriggers.json" CopyToOutputDirectory="Always" />
+    <Content Include="Data\NNeko.png" CopyToOutputDirectory="Always" />
+    <PackageReference Include="ECommons" Version="3.2.0.19" />
     <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.2" />
   </ItemGroup>
 </Project>

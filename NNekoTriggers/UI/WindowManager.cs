@@ -16,7 +16,7 @@ namespace NNekoTriggers.UI
         private readonly IFramework Framework;
         private readonly IDtrBar DtrBar;
 
-        private bool dtrHooked;
+        public bool dtrHooked;
         private int ticksWaited;
         private const int MaxTicks = 600; // ~10 seconds
 
@@ -30,12 +30,12 @@ namespace NNekoTriggers.UI
         /// </summary>
         private readonly WindowSystem windowingSystem;
 
-        public IDtrBarEntry RpOnlyEntry { get; } = Svc.DtrBar.Get("TTrig-RpOnly");
-        public IDtrBarEntry RngEntry { get; } = Svc.DtrBar.Get("TTrig-RNG");
-        public IDtrBarEntry ZoneEntry { get; } = Svc.DtrBar.Get("TTrig-Zone");
-        public IDtrBarEntry GearsetEntry { get; } = Svc.DtrBar.Get("TTrig-Gearset");
-        public IDtrBarEntry OverrideEntry { get; } = Svc.DtrBar.Get("TTrig-Override");
-        public IDtrBarEntry OnLoginEntry { get; } = Svc.DtrBar.Get("TTrig-OnLogin");
+        public IDtrBarEntry RpOnlyEntry { get; set; } // = Svc.DtrBar.Get("TTrig-RpOnly");
+        public IDtrBarEntry RngEntry { get; set; } // = Svc.DtrBar.Get("TTrig-RNG");
+        public IDtrBarEntry ZoneEntry { get; set; } // = Svc.DtrBar.Get("TTrig-Zone");
+        public IDtrBarEntry GearsetEntry { get; set; } // = Svc.DtrBar.Get("TTrig-Gearset");
+        public IDtrBarEntry OverrideEntry { get; set; } // = Svc.DtrBar.Get("TTrig-Override");
+        public IDtrBarEntry OnLoginEntry { get; set; } // = Svc.DtrBar.Get("TTrig-OnLogin");
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="WindowManager" /> class.
@@ -58,6 +58,12 @@ namespace NNekoTriggers.UI
             if (NNekoTriggers.PluginInterface.UiBuilder.UiPrepared)
             {
                 this.DtrBar = dtrBar;
+                this.RpOnlyEntry = Svc.DtrBar.Get("TTrig-RpOnly");
+                this.RngEntry = Svc.DtrBar.Get("TTrig-RNG");
+                this.ZoneEntry = Svc.DtrBar.Get("TTrig-Zone");
+                this.GearsetEntry = Svc.DtrBar.Get("TTrig-Gearset");
+                this.OverrideEntry = Svc.DtrBar.Get("TTrig-Override");
+                this.OnLoginEntry = Svc.DtrBar.Get("TTrig-OnLogin");
                 this.RpOnlyEntry.Shown = false;
                 this.RngEntry.Shown = false;
                 this.ZoneEntry.Shown = false;
@@ -107,7 +113,7 @@ namespace NNekoTriggers.UI
             }
 
             // Ensure the DTR bar is ready
-            if (NNekoTriggers.PluginInterface.UiBuilder.UiPrepared && this.DtrBar.Entries.Count == 0)
+            if (this.DtrBar.Entries.Count == 0)
             {
                 return;
             }

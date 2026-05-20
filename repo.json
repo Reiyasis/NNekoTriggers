@@ -3,10 +3,12 @@
         "Author": "NaughtyNeko",
         "Name": "NNeko's Conditional Triggers",
         "InternalName": "NNekoTriggers",
-        "AssemblyVersion": "0.0.3.7",
+        "AssemblyVersion": "0.0.4.5",
+        "Version": "0.0.4.2",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 15,
-        "LoadPriority": 69,
+        "LoadPriority": 0,
+        "LoadRequiredState": 0,
         "IsHide": "False",
         "IsTestingExclusive": "False",
         "Punchline": "Modular trigger system with DTR integration.",
@@ -15,8 +17,8 @@
         "CategoryTags": [ "Utility", "Other" ],
         "IconUrl": "https://raw.githubusercontent.com/NNekoPlugins/NNekoTriggers/main/NNekoTriggers/Data/NNeko.png",
         "RepoUrl": "https://github.com/NNekoPlugins/NNekoTriggers",
-        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.7/latest.zip",
-        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.7/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.3.7/latest.zip"
+        "DownloadLinkInstall": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.5/latest.zip",
+        "DownloadLinkTesting": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.5/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/NNekoPlugins/NNekoTriggers/releases/download/v0.0.4.5/latest.zip"
     }
 ]

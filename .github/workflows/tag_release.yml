@@ -17,27 +17,31 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: NNekoTriggers/
         shell: bash
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           submodules: true
+          fetch-depth: 0
+          fetch-tags: true
+          lfs: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 10.0.x
+          GitVersion: ${{ github.ref_name }}
 
       - name: Setup Dalamud
         uses: Blooym/setup-dalamud@v1.1.0
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore NNekoTriggers/NNekoTriggers.csproj
+
 
       - name: Build plugin in release mode
-        run: dotnet build -c Release --no-restore --nologo -o ./bin/Release
+        run: dotnet build NNekoTriggers/NNekoTriggers.csproj -c Release --no-restore --nologo -o NNekoTriggers/bin/Release
 
       - name: Generate Checksums
         working-directory: NNekoTriggers/bin/Release/NNekoTriggers
@@ -58,11 +62,10 @@ jobs:
 
       - name: Update repo.json
         run: |
-          cd ../
 
           export TAG_NAME=$(echo ${{ github.ref_name }} | sed 's/^v//')
           export REPO_LOCATION=$(echo ${{ github.server_url }}/${{ github.repository }} | sed  's/\//\\\//g')
-
+          
           sed -i "s/\"AssemblyVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\"/\"AssemblyVersion\": \"${TAG_NAME}\"/g" repo.json
           sed -i "s/\"TestingAssemblyVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\"/\"TestingAssemblyVersion\": \"${TAG_NAME}\"/g" repo.json
           sed -i "s/\"DownloadLinkInstall\": \"[^\"]*\"/\"DownloadLinkInstall\": \"$REPO_LOCATION\/releases\/download\/${{ github.ref_name }}\/latest.zip\"/g" repo.json
