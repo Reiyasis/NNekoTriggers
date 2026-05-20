@@ -16,6 +16,7 @@ using Dalamud.Game.Gui.Toast;
 using Task = System.Threading.Tasks.Task;
 using TerritoryType = Lumina.Excel.Sheets.TerritoryType;
 
+
 namespace NNekoTriggers
 {
     internal sealed class NNekoTriggers : IDalamudPlugin, IDisposable
@@ -43,6 +44,9 @@ namespace NNekoTriggers
         // Item Useトリガーの連打防止用クールダウン（戦闘中の連打対策）
         private static DateTime _lastItemUseTriggered = DateTime.MinValue;
         private static readonly TimeSpan _itemUseCooldown = TimeSpan.FromMilliseconds(1000);  // ← ここを調整可能
+                                                                                              // Weapon Skill Useトリガーの連打防止用クールダウン
+        private static DateTime _lastWeaponSkillTriggered = DateTime.MinValue;
+        private static readonly TimeSpan _weaponSkillCooldown = TimeSpan.FromMilliseconds(800);
         public static WindowManager WindowManager { get; private set; }
         public static PluginConfiguration PluginConfiguration { get; private set; }
         //internal static IDtrBarEntry DtrEntry;
@@ -324,94 +328,164 @@ namespace NNekoTriggers
         {
             var result = _useActionHook!.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
 
-            if (actionType != ActionType.Item || !ClientState.IsLoggedIn)
+            if (!ClientState.IsLoggedIn)
                 return result;
 
             var characterConfig = Utils.GetCharacterConfig();
-            if (characterConfig == null ||
-                !characterConfig.PluginEnabled ||
-                !characterConfig.EnableItemUse ||
-                (characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)))
+
+            // ==================== ITEM USE TRIGGER (そのまま) ====================
+            if (actionType == ActionType.Item &&
+                characterConfig.EnableItemUse &&
+                !(characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
+                ShouldDoENF())
             {
-                return result;
-            }
+                if (DateTime.UtcNow - _lastItemUseTriggered < _itemUseCooldown)
+                    return result;
 
-            if (!ShouldDoENF())
-                return result;
+                _lastItemUseTriggered = DateTime.UtcNow;
 
-            // 【追加】Item Useトリガーのクールダウン（連打防止）
-            if (DateTime.UtcNow - _lastItemUseTriggered < _itemUseCooldown)
-                return result;
+                var commands = new List<string>
+        {
+            characterConfig.ItemUseCommand1.Content,
+            characterConfig.ItemUseCommand2.Content,
+            characterConfig.ItemUseCommand3.Content
+        };
 
-            _lastItemUseTriggered = DateTime.UtcNow;
+                var displayTexts = new List<string>
+        {
+            characterConfig.ItemUseDisplayText1,
+            characterConfig.ItemUseDisplayText2,
+            characterConfig.ItemUseDisplayText3
+        };
 
-            // ── ここから下は今までのコード（3コマンド対応・改行対応など）は変更なし ──
-            var commands = new List<string>
-    {
-        characterConfig.ItemUseCommand1.Content,
-        characterConfig.ItemUseCommand2.Content,
-        characterConfig.ItemUseCommand3.Content
-    };
-
-            var displayTexts = new List<string>
-    {
-        characterConfig.ItemUseDisplayText1,
-        characterConfig.ItemUseDisplayText2,
-        characterConfig.ItemUseDisplayText3
-    };
-
-            if (commands.Count == 0)
-            {
-                PluginLog.Warning("ItemUse Triggered but no commands are set.");
-                return result;
-            }
-
-            int index = Random.Shared.Next(commands.Count);
-            var selectedCommandBlock = commands[index];
-
-            PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing command block: {selectedCommandBlock}");
-
-            // コマンド実行（改行対応）
-            new Task(() =>
-            {
-                try
+                if (commands.All(string.IsNullOrWhiteSpace))
                 {
-                    while (!Utils.CanUseGlamourPlates())
-                        Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    PluginLog.Warning("ItemUse Triggered but no commands are set.");
+                    return result;
+                }
 
-                    var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var line in commandLines)
+                int index = Random.Shared.Next(commands.Count);
+                var selectedCommandBlock = commands[index];
+
+                PluginLog.Information($"ItemUse Triggered (Item ID: {actionId}) → Executing command block");
+
+                new Task(() =>
+                {
+                    try
                     {
-                        var cmd = line.Trim();
-                        if (!string.IsNullOrWhiteSpace(cmd) && !Player.Mounted)
+                        Task.Delay(500).Wait();
+
+                        var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in commandLines)
                         {
-                            Commands.ProcessCommand(cmd);
-                            Task.Delay(300).Wait();
+                            var cmd = line.Trim();
+                            if (!string.IsNullOrWhiteSpace(cmd) && ShouldDoENF())
+                            {
+                                PluginLog.Information($"[ItemTask] → Executing command: '{cmd}'");
+                                Commands.ProcessCommand(cmd);
+                                Task.Delay(300).Wait();
+                            }
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    PluginLog.Error(e, "An error occured whilst attempting to execute item use command.");
-                }
-            }).Start();
-
-            // テキスト表示（改行対応）
-            var selectedTextBlock = displayTexts[index];
-            var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
-            new Task(() =>
-            {
-                foreach (var line in textLines)
-                {
-                    var trimmed = line.Trim();
-                    if (!string.IsNullOrWhiteSpace(trimmed))
+                    catch (Exception e)
                     {
-                        NNekoTriggers.ToastGui.ShowQuest(trimmed);
-                        Task.Delay(TimeSpan.FromSeconds(characterConfig.ItemUseDisplayDelay)).Wait();
+                        PluginLog.Error(e, "An error occured whilst attempting to execute item use command.");
                     }
+                }).Start();
+
+                // テキスト表示
+                var selectedTextBlock = displayTexts[index];
+                var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                new Task(() =>
+                {
+                    foreach (var line in textLines)
+                    {
+                        var trimmed = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(trimmed))
+                        {
+                            ToastGui.ShowQuest(trimmed);
+                            Task.Delay(TimeSpan.FromSeconds(characterConfig.ItemUseDisplayDelay)).Wait();
+                        }
+                    }
+                }).Start();
+            }
+
+            // ==================== NEW: WEAPON SKILL USE TRIGGER ====================
+            if (actionType == (ActionType)1 &&   // GCD（武器スキル／魔法）
+                characterConfig.EnableWeaponSkillUse &&
+                !(characterConfig.EnableRpOnly && !Player.OnlineStatus.Equals(ROLEPLAY_ONLINE_STATUS_ID)) &&
+                ShouldDoENF())
+            {
+                if (DateTime.UtcNow - _lastWeaponSkillTriggered < _weaponSkillCooldown)
+                    return result;
+
+                _lastWeaponSkillTriggered = DateTime.UtcNow;
+
+                var commands = new List<string>
+        {
+            characterConfig.WeaponSkillCommand1.Content,
+            characterConfig.WeaponSkillCommand2.Content,
+            characterConfig.WeaponSkillCommand3.Content
+        };
+
+                var displayTexts = new List<string>
+        {
+            characterConfig.WeaponSkillDisplayText1,
+            characterConfig.WeaponSkillDisplayText2,
+            characterConfig.WeaponSkillDisplayText3
+        };
+
+                if (commands.All(string.IsNullOrWhiteSpace))
+                {
+                    PluginLog.Warning("WeaponSkill Triggered but no commands are set.");
+                    return result;
                 }
-            }).Start();
+
+                int index = Random.Shared.Next(commands.Count);
+                var selectedCommandBlock = commands[index];
+
+                PluginLog.Information($"WeaponSkill Triggered (Action ID: {actionId}) → Executing command block");
+
+                new Task(() =>
+                {
+                    try
+                    {
+                        Task.Delay(300).Wait();
+
+                        var commandLines = selectedCommandBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in commandLines)
+                        {
+                            var cmd = line.Trim();
+                            if (!string.IsNullOrWhiteSpace(cmd) && ShouldDoENF())
+                            {
+                                PluginLog.Information($"[WeaponSkillTask] → Executing command: '{cmd}'");
+                                Commands.ProcessCommand(cmd);
+                                Task.Delay(300).Wait();
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.Error(e, "An error occured whilst attempting to execute weapon skill command.");
+                    }
+                }).Start();
+
+                // テキスト表示
+                var selectedTextBlock = displayTexts[index];
+                var textLines = selectedTextBlock.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                new Task(() =>
+                {
+                    foreach (var line in textLines)
+                    {
+                        var trimmed = line.Trim();
+                        if (!string.IsNullOrWhiteSpace(trimmed))
+                        {
+                            ToastGui.ShowQuest(trimmed);
+                            Task.Delay(TimeSpan.FromSeconds(characterConfig.WeaponSkillDisplayDelay)).Wait();
+                        }
+                    }
+                }).Start();
+            }
 
             return result;
         }

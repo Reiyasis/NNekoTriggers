@@ -54,6 +54,14 @@ namespace NNekoTriggers.Configuration
         public string ItemUseDisplayText1 = string.Empty;
         public string ItemUseDisplayText2 = string.Empty;
         public string ItemUseDisplayText3 = string.Empty;
+        public bool EnableWeaponSkillUse;
+        public CustomCommand WeaponSkillCommand1 = new();
+        public CustomCommand WeaponSkillCommand2 = new();
+        public CustomCommand WeaponSkillCommand3 = new();
+        public string WeaponSkillDisplayText1 = string.Empty;
+        public string WeaponSkillDisplayText2 = string.Empty;
+        public string WeaponSkillDisplayText3 = string.Empty;
+        public float WeaponSkillDisplayDelay = 1.5f;
 
     }
 
